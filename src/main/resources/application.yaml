@@ -1,0 +1,51 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: API-GATEWAY
+  config:
+    import: configserver:http://localhost:9296
+  cloud:
+    gateway:
+      routes:
+        - id: INFO-SERVICE
+          uri: lb://INFO-SERVICE
+          predicates:
+            - Path=/disposal-methods/**, /items/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: INFO-SERVICE
+                fallbackuri: forward:/infoServiceFallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1 # How many request allow /sec, here 1/sec
+                redis-rate-limiter.burstCapacity: 1
+        - id: GARBAGE-SERVICE
+          uri: lb://GARBAGE-SERVICE
+          predicates:
+            - Path=/electronics-garbage/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: GARBAGE-SERVICE
+                fallbackuri: forward:/garbageServiceFallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 1
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/users/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: USER-SERVICE
+                fallbackuri: forward:/userServiceFallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 1
+
