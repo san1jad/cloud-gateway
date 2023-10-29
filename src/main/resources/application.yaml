@@ -4,8 +4,8 @@ server:
 spring:
   application:
     name: API-GATEWAY
-  config:
-    import: configserver:http://localhost:9296
+#  config:
+#    import: configserver:http://localhost:9296
   cloud:
     gateway:
       routes:
@@ -20,8 +20,8 @@ spring:
                 fallbackuri: forward:/infoServiceFallback
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 1 # How many request allow /sec, here 1/sec
-                redis-rate-limiter.burstCapacity: 1
+                redis-rate-limiter.replenishRate: 2 # How many request allow /sec, here 1/sec
+                redis-rate-limiter.burstCapacity: 2
         - id: GARBAGE-SERVICE
           uri: lb://GARBAGE-SERVICE
           predicates:
@@ -33,8 +33,8 @@ spring:
                 fallbackuri: forward:/garbageServiceFallback
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 1
-                redis-rate-limiter.burstCapacity: 1
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 10
         - id: USER-SERVICE
           uri: lb://USER-SERVICE
           predicates:
@@ -48,4 +48,54 @@ spring:
               args:
                 redis-rate-limiter.replenishRate: 1
                 redis-rate-limiter.burstCapacity: 1
+#  security:
+#    oauth2:
+#      resourceserver:
+#        jwt:
+#          issuer-uri: https://dev-36592237.okta.com/oauth2/default
+#      client:
+#        registration:
+#          internal-client:
+#            provider: okta
+#            authorization-grant-type: client_credentials
+#            scope: internal
+#            client-id: 0oacv28sym7cFitTr5d7
+#            client-secret: N4Rq3keNF9Q43Nq5eH-_Sg9ladr8dq2_Ay5M-_K6tqZngHWXhImqB3kweSWnuW1o
+#        provider:
+#          okta:
+#            issuer-uri: https://dev-36592237.okta.com/oauth2/default
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    serviceUrl:
+      defaultZone: ${EUREKA_SERVER_ADDRESS:http://localhost:8076/eureka}
+
+logging:
+  pattern:
+    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+  tracing:
+    sampling:
+      probability: 1.0
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requestes: true
+
+#okta:
+#  oauth2:
+#    issuer: https://dev-36592237.okta.com/oauth2/default
+#    audience: api://default
+
 
